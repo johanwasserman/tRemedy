@@ -1,0 +1,107 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.metadata.IMetadataTable 
+		org.talend.core.model.metadata.IMetadataColumn
+		org.talend.core.model.process.EConnectionType 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		org.talend.core.model.metadata.types.JavaTypesManager
+		org.talend.core.model.metadata.types.JavaType
+		java.util.List 
+    	java.util.Map
+    	java.util.regex.Pattern
+	"
+%>
+<%
+	CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+	INode node = (INode)codeGenArgument.getArgument();
+	String cid = node.getUniqueName(); 
+	String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
+	String port = ElementParameterParser.getValue(node, "__PORT__");
+	String username = ElementParameterParser.getValue(node, "__USERNAME__");
+	String password = ElementParameterParser.getValue(node, "__PASSWORD__");
+	String arform = ElementParameterParser.getValue(node, "__FORM__");
+	String query = ElementParameterParser.getValue(node, "__QUERY__");
+	String maxGet = ElementParameterParser.getValue(node, "__NUM_RESULTS__");
+    boolean useExistingConnection = "true".equalsIgnoreCase(ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__"));
+
+
+	List<IMetadataTable> metadatas = node.getMetadataList();
+	List<IMetadataColumn> columns = null;
+	if ((metadatas != null) && (metadatas.size()>0)) {
+		IMetadataTable metadata = metadatas.get(0);
+		if (metadata != null) {
+			columns = metadata.getListColumns();
+		}
+	}
+%>
+	String query_<%=cid%> = <%=query%>;
+	query_<%=cid%> = (query_<%=cid%>.isEmpty())?"1=1":query_<%=cid%>;
+	int port_<%=cid%> = (<%=port%>.isEmpty())?0:Integer.valueOf(<%=port%>);
+	
+		com.bmc.arsys.api.ARServerUser aruser_<%=cid%> = null;
+<%
+      		if (useExistingConnection){
+      			String connection = ElementParameterParser.getValue(node, "__CONNECTION__");
+%>
+				aruser_<%=cid%> = (com.bmc.arsys.api.ARServerUser)globalMap.get("aruser_<%=connection%>");
+<%
+			} else {
+%>
+				aruser_<%=cid%> = new com.bmc.arsys.api.ARServerUser(<%=username%>, <%=password%>, "", <%=arserver%>, port_<%=cid%>);
+<%
+			}
+%>
+				
+//	com.bmc.arsys.api.ARServerUser aruser_<%=cid%> = new com.bmc.arsys.api.ARServerUser(<%=username%>, <%=password%>, "", <%=arserver%>, port_<%=cid%>);
+	java.util.Map<Integer, String> fieldlist_<%=cid%> = new java.util.HashMap<Integer, String>();
+	java.util.List<com.bmc.arsys.api.Entry> entries_<%=cid%> = null;
+	java.util.List<com.bmc.arsys.api.Field> fields_<%=cid%> = null;
+	com.bmc.arsys.api.OutputInteger nMatches_<%=cid%> = new com.bmc.arsys.api.OutputInteger();
+	try {
+		fields_<%=cid%> = aruser_<%=cid%>.getListFieldObjects(<%=arform%>);
+		for (com.bmc.arsys.api.Field field_<%=cid%> : fields_<%=cid%>) {
+			if (field_<%=cid%>.getFieldID() != 15) {
+<%
+				for (int i = 0; i < columns.size(); i++) {
+					IMetadataColumn column = columns.get(i);
+%>
+					if (field_<%=cid%>.getName().toString().replaceAll("\\W", "_").equalsIgnoreCase("<%=column.getLabel()%>")) {
+						fieldlist_<%=cid%>.put(field_<%=cid%>.getFieldID(), "<%=column.getLabel()%>");
+					}
+<%
+				}
+%>	
+			}
+		}
+	} catch (com.bmc.arsys.api.ARException e) {
+		e.printStackTrace();
+	}
+
+	int[] ids_<%=cid%> = new int[fieldlist_<%=cid%>.size()];
+	java.util.Set<java.lang.Integer> fldids_<%=cid%> = fieldlist_<%=cid%>.keySet();
+	java.util.Iterator<java.lang.Integer> fldit_<%=cid%> = fldids_<%=cid%>.iterator();
+	int index_<%=cid%> = 0;
+	while(fldit_<%=cid%>.hasNext()) {
+			ids_<%=cid%>[index_<%=cid%>] = (java.lang.Integer) fldit_<%=cid%>.next();
+			index_<%=cid%>++;
+	}
+
+	try {
+	
+		com.bmc.arsys.api.ServerInfoMap maxGetListConfiguration_<%=cid%> = aruser_<%=cid%>.getServerInfo(new int[]{com.bmc.arsys.api.Constants.AR_SERVER_INFO_MAX_ENTRIES});
+		int maxGetList_<%=cid%> = (Integer.valueOf(<%=maxGet%>) > 0)?((Integer.valueOf(<%=maxGet%>) > maxGetListConfiguration_<%=cid%>.firstEntry().getValue().getIntValue())?Integer.valueOf(<%=maxGet%>):maxGetListConfiguration_<%=cid%>.firstEntry().getValue().getIntValue()):0;
+		com.bmc.arsys.api.QualifierInfo qual_<%=cid%> = aruser_<%=cid%>.parseQualification(<%=arform%>, query_<%=cid%>);
+		int count_<%=cid%> = 0;
+		do {
+
+			entries_<%=cid%> = aruser_<%=cid%>.getListEntryObjects(<%=arform%>, qual_<%=cid%>, count_<%=cid%>, maxGetList_<%=cid%>, null, ids_<%=cid%>, false, nMatches_<%=cid%>);
+			count_<%=cid%> += maxGetList_<%=cid%>;
+			
+			java.util.Iterator<com.bmc.arsys.api.Entry> it_<%=cid%> = entries_<%=cid%>.iterator();
+			while(it_<%=cid%>.hasNext()) {
+				com.bmc.arsys.api.Entry entry_<%=cid%> = (com.bmc.arsys.api.Entry)it_<%=cid%>.next();
+		

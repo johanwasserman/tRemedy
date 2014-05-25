@@ -1,0 +1,64 @@
+<%@ jet 
+  imports="
+    org.talend.core.model.process.INode 
+    org.talend.core.model.metadata.IMetadataTable 
+    org.talend.designer.codegen.config.CodeGeneratorArgument
+    java.util.List
+	org.talend.core.model.process.ElementParameterParser 
+  "
+%>
+<%
+CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+INode node = (INode)codeGenArgument.getArgument();
+String cid = node.getUniqueName();
+
+String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
+boolean useExistingConnection = "true".equalsIgnoreCase(ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__"));
+
+List<IMetadataTable> metadatas = node.getMetadataList();
+
+boolean isLog4jEnabled = false;
+
+if (metadatas != null && metadatas.size() > 0) {
+	IMetadataTable metadata = metadatas.get(0);
+  
+	if (metadata != null) {
+		isLog4jEnabled = ("true").equals(ElementParameterParser.getValue(node.getProcess(), "__LOG4J_ACTIVATE__"));
+  %>
+		globalMap.put("<%=cid %>_NB_LINE", nb_line_<%=cid%>);
+		globalMap.put("<%=cid %>_NB_LINE_OK", nb_line_ok_<%=cid%>);
+		globalMap.put("<%=cid %>_NB_LINE_REJECT", nb_line_reject_<%=cid%>);
+    
+<%
+		if(isLog4jEnabled){
+%>
+			log.info("<%=cid%> - Processed records:" + nb_line_<%=cid%> + ". Successful:" + nb_line_ok_<%=cid%> + ". Failed:" + nb_line_reject_<%=cid%> + ".");
+<%
+		}
+%>
+<%
+	}
+}
+
+	if (!useExistingConnection){
+%>
+		aruser_<%=cid%>.logout();
+<%
+	}
+	
+	if(isLog4jEnabled){
+%>
+		log.info("Outgoing connection for "+<%=arserver%>+" released");
+<%
+	}
+%>
+} catch (Exception e) {
+<%
+	if(isLog4jEnabled){
+%>
+		log.fatal("<%=cid%> - " + e.getMessage());
+<%
+	}
+%>
+	throw e;
+}

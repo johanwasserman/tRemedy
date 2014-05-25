@@ -1,0 +1,140 @@
+ <%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.metadata.IMetadataTable 
+		org.talend.core.model.metadata.IMetadataColumn
+		org.talend.core.model.process.EConnectionType 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		org.talend.core.model.metadata.types.JavaTypesManager
+		org.talend.core.model.metadata.types.JavaType
+		java.util.List 
+    	java.util.Map
+	" 
+%>
+<% 
+	CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+	INode node = (INode)codeGenArgument.getArgument();
+	String cid = node.getUniqueName(); 
+	String arform = ElementParameterParser.getValue(node, "__FORM__");
+%>
+<%
+	List<IMetadataTable> metadatas = node.getMetadataList();
+	List<IMetadataColumn> columns = null;
+	if ((metadatas != null) && (metadatas.size()>0)) {
+		IMetadataTable metadata = metadatas.get(0);
+		if (metadata != null) {
+			columns = metadata.getListColumns();
+		}
+	}
+%>
+<%
+	List< ? extends IConnection> outConns = node.getOutgoingConnections();
+	for (IConnection conn : outConns) { // for 0
+		if (conn.getLineStyle().equals(EConnectionType.FLOW_MAIN)||conn.getLineStyle().equals(EConnectionType.FLOW_MERGE)) { // if 0
+			String outputConnName = conn.getName();
+%>
+			com.bmc.arsys.api.Entry record_<%=cid%> = aruser_<%=cid%>.getEntry(<%=arform%>, entry_<%=cid%>.getEntryId(), ids_<%=cid%>);
+			java.util.Iterator<java.util.Map.Entry<java.lang.Integer, com.bmc.arsys.api.Value>> data_<%=cid%> = record_<%=cid%>.entrySet().iterator();
+			while (data_<%=cid%>.hasNext()) { // while
+				java.util.Map.Entry<java.lang.Integer, com.bmc.arsys.api.Value> col_<%=cid%> = data_<%=cid%>.next();
+				int type_<%=cid%> = col_<%=cid%>.getValue().getDataType().toInt(); // Field Type
+				int key_<%=cid%> = java.lang.Integer.valueOf(col_<%=cid%>.getKey().toString()); // Field ID
+				//get the enum list if this is a selection field
+				java.util.List<com.bmc.arsys.api.EnumItem> enum_<%=cid%> = null;
+				if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ENUM) {
+					for (com.bmc.arsys.api.Field field_<%=cid%> : fields_<%=cid%>) {
+						if (field_<%=cid%>.getFieldID() ==  key_<%=cid%>) {
+							enum_<%=cid%> = ((com.bmc.arsys.api.SelectionFieldLimit)field_<%=cid%>.getFieldLimit()).getValues();
+						}
+					}
+				}
+				java.lang.Object obj_<%=cid%> = null;
+				obj_<%=cid%> = col_<%=cid%>.getValue().getValue(); // Field Value
+<%
+				for (int i = 0; i < columns.size(); i++) { // for 1
+					IMetadataColumn column = columns.get(i);
+%>
+					if ("<%=column.getLabel() %>".equalsIgnoreCase(fieldlist_<%=cid%>.get(key_<%=cid%>))) { // if 1
+						if (obj_<%=cid%> == null) { // if 2
+							<%=outputConnName %>.<%=column.getLabel() %> = null;
+						} else {
+<%
+							JavaType javaType = JavaTypesManager.getJavaTypeFromId(column.getTalendType());
+							String typeToGenerate = JavaTypesManager.getTypeToGenerate(column.getTalendType(), column.isNullable());
+							String patternValue = column.getPattern() == null || column.getPattern().trim().length() == 0 ? null : column.getPattern();
+							if (javaType == JavaTypesManager.OBJECT) { // if 3
+%>
+								if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DIARY) {
+									<%=outputConnName %>.<%=column.getLabel() %> = (com.bmc.arsys.api.DiaryListValue) obj_<%=cid%>;
+								} else if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ATTACH) {
+									((com.bmc.arsys.api.AttachmentValue) obj_<%=cid%>).setValue(aruser_<%=cid%>.getEntryBlob(<%=arform%>, entry_<%=cid%>.getEntryId(), key_<%=cid%>));
+									<%=outputConnName %>.<%=column.getLabel() %> = (com.bmc.arsys.api.AttachmentValue) obj_<%=cid%>;
+								} else if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) {
+									<%=outputConnName %>.<%=column.getLabel() %> = (com.bmc.arsys.api.CurrencyValue) obj_<%=cid%>;
+								}
+<%
+							} else if (javaType == JavaTypesManager.DATE) {
+%>
+								if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME) {
+									<%=outputConnName %>.<%=column.getLabel() %> = ParserUtils.parseTo_Date(((com.bmc.arsys.api.Timestamp) obj_<%=cid%>).toDate(), <%= patternValue %>);
+								}
+<%
+							} else if (javaType == JavaTypesManager.LONG) {
+%>
+								if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME_OF_DAY) {
+									<%=outputConnName %>.<%=column.getLabel() %> = ((com.bmc.arsys.api.Time) obj_<%=cid%>).getValue();
+								} else { // Long
+									<%=outputConnName %>.<%=column.getLabel() %> = (java.lang.Long)obj_<%=cid%>;
+								}
+<%
+							} else if (javaType == JavaTypesManager.INTEGER) {
+%>
+								if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DATE) {
+									<%=outputConnName %>.<%=column.getLabel() %> = ((com.bmc.arsys.api.DateInfo) obj_<%=cid%>).getValue();
+								} else {
+									<%=outputConnName %>.<%=column.getLabel() %> = (java.lang.Integer)obj_<%=cid%>;
+								}
+<%
+							} else if (javaType == JavaTypesManager.FLOAT) {
+%>
+								if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_REAL) {
+									<%=outputConnName %>.<%=column.getLabel() %> = (java.lang.Float)obj_<%=cid%>;
+								}
+<%
+							} else if (javaType == JavaTypesManager.STRING) {
+%>
+								if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) {
+									<%=outputConnName %>.<%=column.getLabel() %> = ((com.bmc.arsys.api.CurrencyValue) obj_<%=cid%>).getValueString() + " " + ((com.bmc.arsys.api.CurrencyValue) obj_<%=cid%>).getCurrencyCode();
+								} else if (type_<%=cid%> == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ENUM) {
+									String eitemstr_<%=cid%> = "";
+									for (com.bmc.arsys.api.EnumItem eitem_<%=cid%> : enum_<%=cid%>) {
+										if (eitem_<%=cid%>.getEnumItemNumber() == Integer.parseInt(obj_<%=cid%>.toString())) {
+											eitemstr_<%=cid%> = eitem_<%=cid%>.getEnumItemName();
+										}
+									}
+									eitemstr_<%=cid%> = "".equals(eitemstr_<%=cid%>)?obj_<%=cid%>.toString():eitemstr_<%=cid%>;
+									<%=outputConnName %>.<%=column.getLabel() %> = eitemstr_<%=cid%>;
+								} else {
+									<%=outputConnName %>.<%=column.getLabel() %> = ParserUtils.parseTo_<%= typeToGenerate %>(obj_<%=cid%>.toString());
+								}
+<%
+							} else { // Everything else (Double & Big Decimal)
+%>
+								<%=outputConnName %>.<%=column.getLabel() %> = ParserUtils.parseTo_<%= typeToGenerate %>(obj_<%=cid%>.toString());
+<%
+							} // if 3
+%>
+						} //if 2
+					} // if 1
+<%
+				} //for 1
+%>
+			} // while
+<%
+		} // if 0
+	} // for 0
+%>
+		

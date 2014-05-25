@@ -1,0 +1,34 @@
+public static final int	AR_DATA_TYPE_NULL			0	|	NULL value
+public static final int	AR_DATA_TYPE_KEYWORD		1	|	Integer value identifying the particular keyword
+public static final int	AR_DATA_TYPE_INTEGER		2	|	32-bit signed integer
+public static final int	AR_DATA_TYPE_REAL			3	|	64-bit floating-point value
+public static final int	AR_DATA_TYPE_CHAR			4	|	A null-terminated string
+public static final int	AR_DATA_TYPE_DIARY			5	|	A null-terminated string that requires freeing allocated space
+public static final int	AR_DATA_TYPE_ENUM			6	|	For field limits, specifies string values for an enumerated list The set of integer values (beginning with zero) represents possible selection values; and the field value limit is defined as a string of values for each selection.
+public static final int	AR_DATA_TYPE_TIME			7	|	UNIX-style date/time stamp (number of seconds since midnight January 1,1970)
+public static final int	AR_DATA_TYPE_BITMASK		8	|	32-bit unsigned integer value in which each bit represents a flag turned on or off
+public static final int	AR_DATA_TYPE_BYTES			9	|	List of bytes containing binary data
+public static final int	AR_DATA_TYPE_DECIMAL		10	|	Fixed-point decimal field
+public static final int	AR_DATA_TYPE_ATTACH			11	|	An attachment field (Object)
+public static final int	AR_DATA_TYPE_CURRENCY		12	|	Specifies the currency type (Object)
+public static final int	AR_DATA_TYPE_DATE			13	|	Specifies the date type
+public static final int	AR_DATA_TYPE_TIME_OF_DAY	14	|	Number of seconds since midnight
+public static final int	AR_DATA_TYPE_ULONG			40	|	32-bit unsigned integer value
+public static final int	AR_DATA_TYPE_COORDS			41	|	A list of (x ,y ) coordinate pairs
+
+public static final int	AR_DATA_TYPE_JOIN			30
+public static final int	AR_DATA_TYPE_TRIM			31
+public static final int	AR_DATA_TYPE_CONTROL		32
+public static final int	AR_DATA_TYPE_TABLE			33
+public static final int	AR_DATA_TYPE_COLUMN			34
+public static final int	AR_DATA_TYPE_PAGE			35
+public static final int	AR_DATA_TYPE_PAGE_HOLDER	36
+public static final int	AR_DATA_TYPE_ATTACH_POOL	37
+
+public static final int	AR_DATA_TYPE_ULONG			40
+public static final int	AR_DATA_TYPE_COORDS			41
+public static final int	AR_DATA_TYPE_VIEW			42
+public static final int	AR_DATA_TYPE_DISPLAY		43
+
+public static final int	AR_DATA_TYPE_UNKNOWN		101
+public static final int	AR_DATA_TYPE_VALUE_LIST		100

@@ -1,0 +1,306 @@
+<%@ jet 
+imports="
+  org.talend.core.model.process.ElementParameterParser
+  org.talend.core.model.metadata.IMetadataTable
+  org.talend.core.model.metadata.IMetadataColumn
+  org.talend.core.model.process.INode  
+  org.talend.designer.codegen.config.CodeGeneratorArgument
+  org.talend.core.model.process.IConnectionCategory
+  org.talend.core.model.process.IConnection
+  java.util.List
+  java.util.Map
+  org.talend.core.model.metadata.types.JavaTypesManager
+  org.talend.core.model.metadata.types.JavaType
+"
+%>
+<%
+CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+INode node = (INode)codeGenArgument.getArgument();
+String cid = node.getUniqueName();
+
+String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
+String port = ElementParameterParser.getValue(node, "__PORT__");
+String username = ElementParameterParser.getValue(node, "__USERNAME__");
+String password = ElementParameterParser.getValue(node, "__PASSWORD__");
+String arform = ElementParameterParser.getValue(node, "__FORM__");
+String mergeType = ElementParameterParser.getValue(node, "__HANDLEID__");
+Boolean usemerge = ("true").equals(ElementParameterParser.getValue(node, "__USEMERGE__"));
+Boolean nullok = ("true").equals(ElementParameterParser.getValue(node, "__NULLOK__"));
+Boolean pattern = ("true").equals(ElementParameterParser.getValue(node, "__PATTERN__"));
+Boolean workflow = ("true").equals(ElementParameterParser.getValue(node, "__WORKFLOW__"));
+
+String connName = null;
+String filterName = null;
+String rejectName = null;
+
+if (node.getIncomingConnections().size() == 1) { //+1
+	IConnection conn = node.getIncomingConnections().get(0);
+	connName = conn.getName();
+}//-1
+List<IMetadataTable> metadatas = node.getMetadataList();
+
+boolean isLog4jEnabled = false;
+if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
+	IMetadataTable metadata = metadatas.get(0);
+
+	if (metadata!=null && connName != null) {//if connName
+		List<? extends IConnection> conns = node.getOutgoingSortedConnections();
+		List<? extends IConnection> connsFilter = node.getOutgoingConnections("FILTER");
+		List<? extends IConnection> connsReject = node.getOutgoingConnections("REJECT");
+		
+		
+		isLog4jEnabled = ("true").equals(ElementParameterParser.getValue(node.getProcess(), "__LOG4J_ACTIVATE__"));
+
+		//if outgoing connections exists, kill them (a little overkil but safe)
+		if (conns != null && conns.size() > 0) {//if conns
+			for (IConnection conn : conns) {//for conns
+				if (conn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {//if linestyle
+        %>
+					<%=conn.getName()%> = null;
+        <%
+				}//if linestyle
+      		}//for conns
+    	}//if conns
+    	
+    	if (connsFilter != null && connsFilter.size() > 0) {//Success
+    		for (IConnection conn : connsFilter) {//for connsFilter
+    			if (conn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {//if linestyle
+    				filterName = conn.getName();
+%>
+					if (<%=filterName%> == null) {
+						<%=filterName%> = new <%=filterName%>Struct();
+					}
+<%
+				}
+			}
+		}
+		
+		if (connsReject != null && connsReject.size() > 0) {//Failed
+			for (IConnection conn : connsReject) {//for connsReject
+				if (conn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {//if linestyle
+					rejectName = conn.getName();
+%>
+					if (<%=rejectName%> == null) {
+						<%=rejectName%> = new <%=rejectName%>Struct();
+					}
+<%
+					
+				}
+			}
+		}
+%>
+
+		boolean hasError_<%=cid%> = false;
+		String errorMessage_<%=cid%> = "";
+		int mergeType_<%=cid%> = com.bmc.arsys.api.Constants.<%=mergeType%>;
+
+		if (<%=nullok%>) {
+			mergeType_<%=cid%> += com.bmc.arsys.api.Constants.AR_MERGE_NO_REQUIRED_INCREMENT;
+		}
+		if (<%=pattern%>) {
+			mergeType_<%=cid%> += com.bmc.arsys.api.Constants.AR_MERGE_NO_PATTERNS_INCREMENT;
+		}
+		if (<%=workflow%>) {
+			mergeType_<%=cid%> += com.bmc.arsys.api.Constants.AR_MERGE_NO_WORKFLOW_FIRED;
+		}
+
+		try {
+
+			com.bmc.arsys.api.Entry entry_<%=cid%> = new com.bmc.arsys.api.Entry();
+			String entryId_<%=cid%> = "";
+
+			nb_line_<%=cid%> ++;
+<%
+			for (IMetadataColumn column: metadata.getListColumns()) {//for columns
+				String label = column.getLabel();
+				String javaType = JavaTypesManager.getTypeToGenerate(column.getTalendType(), column.isNullable());
+				String patternValue = column.getPattern() == null || column.getPattern().trim().length() == 0 ? null : column.getPattern();
+%>
+				try {
+					for (com.bmc.arsys.api.Field field_<%=cid%> : fields_<%=cid%>) { //for fields
+						if (field_<%=cid%>.getFieldID() != 15) { //if not fieldid 15
+							if (field_<%=cid%>.getName().toString().replaceAll("\\W", "_").equalsIgnoreCase("<%=column.getLabel()%>")) { // if fieldname
+								if (field_<%=cid%>.getFieldID() == 1 && "<%=javaType%>".equalsIgnoreCase("String")) { // If EntryID
+<%
+									if (javaType.equalsIgnoreCase("STRING")) {
+%>
+										if (!"".equals(<%=connName%>.<%=label%>)) {
+											entry_<%=cid%>.setEntryId(<%=connName%>.<%=label%>);
+										}
+<%
+									}
+%>
+								} else if (field_<%=cid%>.getFieldID() != 3 && field_<%=cid%>.getFieldID() != 5 && field_<%=cid%>.getFieldID() != 6) { // else EntryID
+<%
+									if (javaType.equalsIgnoreCase("INTEGER")) {	
+%>							
+										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DATE) {
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.DateInfo(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										} else {
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										}
+<%
+									} else if (javaType.equalsIgnoreCase("LONG")) {
+%>
+										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME) {
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Timestamp(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME_OF_DAY) {
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Time(java.lang.Long.valueOf(<%=connName%>.<%=label%>)), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										} else {
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										}
+<%
+									} else if (javaType.equalsIgnoreCase("JAVA.UTIL.DATE")) {
+%>
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Timestamp(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+<%
+									} else if (javaType.equalsIgnoreCase("STRING")) {
+%>
+										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) {
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.CurrencyValue(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ENUM) {
+											if (<%=connName%>.<%=label%>.matches(".*\\D.*")) { //if there is a word character anywhere, it's a string
+												java.util.List<com.bmc.arsys.api.EnumItem> enum_<%=cid%> = ((com.bmc.arsys.api.SelectionFieldLimit)field_<%=cid%>.getFieldLimit()).getValues();
+												for (com.bmc.arsys.api.EnumItem eitem_<%=cid%> : enum_<%=cid%>) {
+													if (<%=connName%>.<%=label%>.equalsIgnoreCase(eitem_<%=cid%>.getEnumItemName())) {
+														entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(eitem_<%=cid%>.getEnumItemNumber(), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+													}
+												}
+											} else { //it's not a string, presume its an int
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											}
+										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DIARY) {
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DATE) {//int
+											java.util.Calendar cal_<%=cid%> = java.util.Calendar.getInstance();
+											cal_<%=cid%>.setTime(new Date(<%=connName%>.<%=label%>));
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.DateInfo(cal_<%=cid%>.get(java.util.Calendar.YEAR), (cal_<%=cid%>.get(java.util.Calendar.MONTH)+1), cal_<%=cid%>.get(java.util.Calendar.DAY_OF_MONTH)), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME_OF_DAY) {//long
+											String fmt_<%=cid%> = (<%=connName%>.<%=label%>.matches(".*(am|AM|pm|PM).*"))?"hh:mm:ss aaa":"HH:mm:ss";
+											java.text.SimpleDateFormat sdf_<%=cid%> = new java.text.SimpleDateFormat(fmt_<%=cid%>);
+											java.util.Calendar cal_<%=cid%> = java.util.Calendar.getInstance();
+											cal_<%=cid%>.setTime(sdf_<%=cid%>.parse(<%=connName%>.<%=label%>));
+											Long now = cal_<%=cid%>.getTimeInMillis();
+											cal_<%=cid%>.set(java.util.Calendar.HOUR_OF_DAY, 0);
+											cal_<%=cid%>.set(java.util.Calendar.MINUTE, 0);
+											cal_<%=cid%>.set(java.util.Calendar.SECOND, 0);
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Time((now-cal_<%=cid%>.getTimeInMillis())/1000), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));									
+										} else { // plain old string
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										}
+<%
+									} else if (javaType.equalsIgnoreCase("DOUBLE")) {
+%>
+										entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+<%
+									} else if (javaType.equalsIgnoreCase("BIGDECIMAL")) {
+%>
+										entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+<%
+									} else if (javaType.equalsIgnoreCase("OBJECT")) {
+%>
+										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DIARY) { // Diary
+											 if (<%=connName%>.<%=label%> instanceof com.bmc.arsys.api.DiaryListValue) {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.DiaryListValue)<%=connName%>.<%=label%>));
+											} else {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											}
+										} else if(field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ATTACH) { // Attachment
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.AttachmentValue)<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										} else if(field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) { // Currency
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.CurrencyValue)<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+										}
+<%
+									} else {
+%>
+										hasError_<%=cid%> = true;
+										if (("").equals(errorMessage_<%=cid %>)){
+											errorMessage_<%=cid %> = "Could not set Remedy field " + field_<%=cid%>.getName() + ", Remedy datatype " + com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType()) + " with value " + <%=connName%>.<%=label%> + " JavaType <%=javaType%>";
+										} else {
+											errorMessage_<%=cid %> = errorMessage_<%=cid %> + "; " + "Could not set Remedy field " + field_<%=cid%>.getName() + ", Remedy datatype " + com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType()) + " with value " + <%=connName%>.<%=label%> + " JavaType <%=javaType%>";
+										}
+<%
+									}
+%>
+								} // If EntryID
+							} // if fieldname
+						} //if not fieldid 15
+					}//for fields
+
+					// Set outgoing connections with incoming values
+<%
+					if (filterName != null) {
+%>
+						<%=filterName%>.<%=label%> = <%=connName%>.<%=label%>;
+<%
+					}
+					if (rejectName != null) {
+%>
+						<%=rejectName%>.<%=label%> = <%=connName%>.<%=label%>;
+<%
+					}
+%>
+				} catch (Exception e) {
+					hasError_<%=cid%> = true;
+					if (("").equals(errorMessage_<%=cid %>)){
+						errorMessage_<%=cid %> = "[<%=label %>: " + <%=connName%>.<%=label%> + "] " + e.getMessage();
+					} else {
+						errorMessage_<%=cid %> = errorMessage_<%=cid %> + "; " + "[<%=label %>: " + <%=connName%>.<%=label%> + "] " + e.getMessage();
+					}
+				}
+<%
+			}//for columns
+%>
+			if (!hasError_<%=cid%>) {
+				if (<%=usemerge%>) {
+					String returnId_<%=cid%> = aruser_<%=cid%>.mergeEntry(<%=arform%>, entry_<%=cid%>, mergeType_<%=cid%>);
+					if (<%=filterName%> != null) {
+						<%=filterName %>.ETL_IMPORT_REF = returnId_<%=cid%>;
+					}
+				} else {
+					String returnId_<%=cid%> = aruser_<%=cid%>.createEntry(<%=arform%>, entry_<%=cid%>);
+					if (<%=filterName%> != null) {
+						<%=filterName %>.ETL_IMPORT_REF = returnId_<%=cid%>;
+					}
+				}
+				nb_line_ok_<%=cid%> ++;
+			}
+		} catch (Exception e) {
+			hasError_<%=cid%> = true;
+			if (("").equals(errorMessage_<%=cid %>)){
+				errorMessage_<%=cid %> = "[Entry Procesing Failed] " + e.getMessage();
+			} else {
+				errorMessage_<%=cid %> = errorMessage_<%=cid %> + ";" + "SEVERE - [Entry Procesing Failed] " + e.getMessage();
+			}
+		}
+		if (hasError_<%=cid%>) {
+			nb_line_reject_<%=cid%> ++;
+<%
+			if (rejectName != null) {
+%>
+				<%=rejectName %>.ETL_IMPORT_ERR = "Line: " + (tos_count_<%=node.getUniqueName() %>+1) + "|" + errorMessage_<%=cid %>;
+<%
+			}
+%>
+<%
+			if (filterName != null) {
+%>
+				<%=filterName %> = null;
+<%
+			}
+%>
+		} else{
+<%
+			if (rejectName != null) {
+%>
+				<%=rejectName %> = null;
+<%
+			}
+%>				
+		}
+		errorMessage_<%=cid %> = "";
+		hasError_<%=cid%> = false;
+<%
+	}//if connName
+}//if metadatas
+%>

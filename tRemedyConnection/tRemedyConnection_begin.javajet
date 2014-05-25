@@ -1,0 +1,26 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		
+		java.util.Map
+		java.util.List
+	" 
+%>
+<%
+	CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode)codeGenArgument.getArgument();
+
+    String cid = node.getUniqueName();
+	String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
+	String port = ElementParameterParser.getValue(node, "__PORT__");
+	String username = ElementParameterParser.getValue(node, "__USERNAME__");
+	String password = ElementParameterParser.getValue(node, "__PASSWORD__");
+%>
+
+	int port_<%=cid%> = (<%=port%>.isEmpty())?0:Integer.valueOf(<%=port%>);
+
+	com.bmc.arsys.api.ARServerUser aruser_<%=cid%> = new com.bmc.arsys.api.ARServerUser(<%=username%>, <%=password%>, "", <%=arserver%>, port_<%=cid%>);
+
+	globalMap.put("aruser_<%=cid%>", aruser_<%=cid%>);
