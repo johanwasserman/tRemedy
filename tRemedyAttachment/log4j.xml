@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<!--
+ Copyright (c) 2012 BMC Software, Inc.
+ All rights reserved.
+
+ This software is the confidential and proprietary information of 
+ BMC Software, Inc ("Confidential Information"). You shall not 
+ disclose such Confidential Information and shall use it only in
+ accordance with the terms of the license agreement between 
+ you and BMC Software, Inc. 
+ 
+ Various log levels are: DEBUG, INFO, WARN, ERROR and FATAL. The levels are 
+ ordered and we have DEBUG < INFO < WARN < ERROR < FATAL. A logging request 
+ is said to be enabled if its level is higher than or equal to the level of 
+ its logger. For example, if the logger level is WARN, then all Warn, Error and 
+ Fatal logging messages will be logged.
+ 
+ To specify the log filename with the absolute path, please always use the
+ forward slashes in the path name, e.g to create the log file in the c:\temp 
+ directory on a Windows system, the config would be
+ 		<param 	name="File" value="c:/temp/javaapi.log" />	
+ 
+-->
+
+<log4j:configuration debug="false" xmlns:log4j="http://jakarta.apache.org/log4j/">
+  
+	<appender name="Console" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+		<param 	name="ConversionPattern" value="%d %-5p [%t] %C (%F:%L) - %m%n"/>
+		</layout>	    
+	</appender>
+ 
+	<appender name="FileLog" class="org.apache.log4j.RollingFileAppender">
+		<param 	name="File" value="TOS_remedy.log" />	
+		<param 	name="MaxFileSize" value="50000KB"/>
+		<!-- Keep one backup file -->
+		<param 	name="MaxBackupIndex" value="5"/>
+		<layout class="org.apache.log4j.PatternLayout">
+		<param 	name="ConversionPattern" value="%d %-5p [%t] %C (%F:%L) - %m%n"/>
+		</layout>	    
+	</appender>
+
+	<!-- Talend appender -->
+	<appender name="TalendAppender" class="org.talend.platform.logging.TalendPlatformLogAppender">
+		<param name="Threshold" value="info" />
+		<param name="SymbolicName" value="org.talend.platform.logging"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %-5p [%t] %C (%F:%L) - %m%n" />
+		</layout>
+	</appender>
+
+	<!-- The console appender (will output in catalina.out when used in Tomcat) -->
+	<appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">
+		<param name="Threshold" value="error" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %-5p [%t] %C (%F:%L) - %m%n" />
+		</layout>
+	</appender>
+	
+	<logger name="com.bmc.arsys" additivity="true">
+		<level 	value="all" />
+	</logger>
+	<logger name="com.bmc.arsys.api" additivity="true">
+		<level 	value="all" />
+	</logger>
+
+	<root>
+		<priority value ="all" />
+		<!-- use FileLog as the appender for logging to the log file -->
+		<appender-ref ref="FileLog" />
+		<!--
+		<appender-ref ref="Console" />
+		-->
+		<!-- uncomment the following appender in order to have a console log -->
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="TOSAppender" />
+	</root>
+	
+</log4j:configuration>
