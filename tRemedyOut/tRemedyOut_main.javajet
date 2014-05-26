@@ -28,6 +28,7 @@ Boolean usemerge = ("true").equals(ElementParameterParser.getValue(node, "__USEM
 Boolean nullok = ("true").equals(ElementParameterParser.getValue(node, "__NULLOK__"));
 Boolean pattern = ("true").equals(ElementParameterParser.getValue(node, "__PATTERN__"));
 Boolean workflow = ("true").equals(ElementParameterParser.getValue(node, "__WORKFLOW__"));
+Boolean nullempty = ("true").equals(ElementParameterParser.getValue(node, "__NULLEMPTY__"));
 
 String connName = null;
 String filterName = null;
@@ -131,97 +132,107 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 									}
 %>
 								} else if (field_<%=cid%>.getFieldID() != 3 && field_<%=cid%>.getFieldID() != 5 && field_<%=cid%>.getFieldID() != 6) { // else EntryID
+									if (<%=connName%>.<%=label%> == null || "".equals(<%=connName%>.<%=label%>)) {
 <%
-									if (javaType.equalsIgnoreCase("INTEGER")) {	
+										if (nullempty) {
+%>										
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType()));
+<%
+										}
+%>										
+									} else {
+<%
+										if (javaType.equalsIgnoreCase("INTEGER")) {	
 %>							
-										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DATE) {
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.DateInfo(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										} else {
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										}
-<%
-									} else if (javaType.equalsIgnoreCase("LONG")) {
-%>
-										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME) {
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Timestamp(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME_OF_DAY) {
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Time(java.lang.Long.valueOf(<%=connName%>.<%=label%>)), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										} else {
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										}
-<%
-									} else if (javaType.equalsIgnoreCase("JAVA.UTIL.DATE")) {
-%>
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Timestamp(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-<%
-									} else if (javaType.equalsIgnoreCase("STRING")) {
-%>
-										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) {
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.CurrencyValue(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ENUM) {
-											if (<%=connName%>.<%=label%>.matches(".*\\D.*")) { //if there is a word character anywhere, it's a string
-												java.util.List<com.bmc.arsys.api.EnumItem> enum_<%=cid%> = ((com.bmc.arsys.api.SelectionFieldLimit)field_<%=cid%>.getFieldLimit()).getValues();
-												for (com.bmc.arsys.api.EnumItem eitem_<%=cid%> : enum_<%=cid%>) {
-													if (<%=connName%>.<%=label%>.equalsIgnoreCase(eitem_<%=cid%>.getEnumItemName())) {
-														entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(eitem_<%=cid%>.getEnumItemNumber(), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-													}
-												}
-											} else { //it's not a string, presume its an int
-												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-											}
-										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DIARY) {
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DATE) {//int
-											java.util.Calendar cal_<%=cid%> = java.util.Calendar.getInstance();
-											cal_<%=cid%>.setTime(new Date(<%=connName%>.<%=label%>));
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.DateInfo(cal_<%=cid%>.get(java.util.Calendar.YEAR), (cal_<%=cid%>.get(java.util.Calendar.MONTH)+1), cal_<%=cid%>.get(java.util.Calendar.DAY_OF_MONTH)), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME_OF_DAY) {//long
-											String fmt_<%=cid%> = (<%=connName%>.<%=label%>.matches(".*(am|AM|pm|PM).*"))?"hh:mm:ss aaa":"HH:mm:ss";
-											java.text.SimpleDateFormat sdf_<%=cid%> = new java.text.SimpleDateFormat(fmt_<%=cid%>);
-											java.util.Calendar cal_<%=cid%> = java.util.Calendar.getInstance();
-											cal_<%=cid%>.setTime(sdf_<%=cid%>.parse(<%=connName%>.<%=label%>));
-											Long now = cal_<%=cid%>.getTimeInMillis();
-											cal_<%=cid%>.set(java.util.Calendar.HOUR_OF_DAY, 0);
-											cal_<%=cid%>.set(java.util.Calendar.MINUTE, 0);
-											cal_<%=cid%>.set(java.util.Calendar.SECOND, 0);
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Time((now-cal_<%=cid%>.getTimeInMillis())/1000), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));									
-										} else { // plain old string
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										}
-<%
-									} else if (javaType.equalsIgnoreCase("DOUBLE")) {
-%>
-										entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-<%
-									} else if (javaType.equalsIgnoreCase("BIGDECIMAL")) {
-%>
-										entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-<%
-									} else if (javaType.equalsIgnoreCase("OBJECT")) {
-%>
-										if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DIARY) { // Diary
-											 if (<%=connName%>.<%=label%> instanceof com.bmc.arsys.api.DiaryListValue) {
-												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.DiaryListValue)<%=connName%>.<%=label%>));
+											if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DATE) {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.DateInfo(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
 											} else {
 												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
 											}
-										} else if(field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ATTACH) { // Attachment
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.AttachmentValue)<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										} else if(field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) { // Currency
-											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.CurrencyValue)<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
-										}
 <%
-									} else {
+										} else if (javaType.equalsIgnoreCase("LONG")) {
 %>
-										hasError_<%=cid%> = true;
-										if (("").equals(errorMessage_<%=cid %>)){
-											errorMessage_<%=cid %> = "Could not set Remedy field " + field_<%=cid%>.getName() + ", Remedy datatype " + com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType()) + " with value " + <%=connName%>.<%=label%> + " JavaType <%=javaType%>";
+											if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME) {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Timestamp(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME_OF_DAY) {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Time(java.lang.Long.valueOf(<%=connName%>.<%=label%>)), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											} else {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											}
+<%
+										} else if (javaType.equalsIgnoreCase("JAVA.UTIL.DATE")) {
+%>
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Timestamp(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+<%
+										} else if (javaType.equalsIgnoreCase("STRING")) {
+%>
+											if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.CurrencyValue(<%=connName%>.<%=label%>), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ENUM) {
+												if (<%=connName%>.<%=label%>.matches(".*\\D.*")) { //if there is a word character anywhere, it's a string
+													java.util.List<com.bmc.arsys.api.EnumItem> enum_<%=cid%> = ((com.bmc.arsys.api.SelectionFieldLimit)field_<%=cid%>.getFieldLimit()).getValues();
+													for (com.bmc.arsys.api.EnumItem eitem_<%=cid%> : enum_<%=cid%>) {
+														if (<%=connName%>.<%=label%>.equalsIgnoreCase(eitem_<%=cid%>.getEnumItemName())) {
+															entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(eitem_<%=cid%>.getEnumItemNumber(), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+														}
+													}
+												} else { //it's not a string, presume its an int
+													entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+												}
+											} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DIARY) {
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DATE) {//int
+												java.util.Calendar cal_<%=cid%> = java.util.Calendar.getInstance();
+												cal_<%=cid%>.setTime(new Date(<%=connName%>.<%=label%>));
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.DateInfo(cal_<%=cid%>.get(java.util.Calendar.YEAR), (cal_<%=cid%>.get(java.util.Calendar.MONTH)+1), cal_<%=cid%>.get(java.util.Calendar.DAY_OF_MONTH)), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											} else if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_TIME_OF_DAY) {//long
+												String fmt_<%=cid%> = (<%=connName%>.<%=label%>.matches(".*(am|AM|pm|PM).*"))?"hh:mm:ss aaa":"HH:mm:ss";
+												java.text.SimpleDateFormat sdf_<%=cid%> = new java.text.SimpleDateFormat(fmt_<%=cid%>);
+												java.util.Calendar cal_<%=cid%> = java.util.Calendar.getInstance();
+												cal_<%=cid%>.setTime(sdf_<%=cid%>.parse(<%=connName%>.<%=label%>));
+												Long now = cal_<%=cid%>.getTimeInMillis();
+												cal_<%=cid%>.set(java.util.Calendar.HOUR_OF_DAY, 0);
+												cal_<%=cid%>.set(java.util.Calendar.MINUTE, 0);
+												cal_<%=cid%>.set(java.util.Calendar.SECOND, 0);
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(new com.bmc.arsys.api.Time((now-cal_<%=cid%>.getTimeInMillis())/1000), com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));									
+											} else { // plain old string
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											}
+<%
+										} else if (javaType.equalsIgnoreCase("DOUBLE")) {
+%>
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+<%
+										} else if (javaType.equalsIgnoreCase("BIGDECIMAL")) {
+%>
+											entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+<%
+										} else if (javaType.equalsIgnoreCase("OBJECT")) {
+%>
+											if (field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_DIARY) { // Diary
+												 if (<%=connName%>.<%=label%> instanceof com.bmc.arsys.api.DiaryListValue) {
+													entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.DiaryListValue)<%=connName%>.<%=label%>));
+												} else {
+													entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value(<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+												}
+											} else if(field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_ATTACH) { // Attachment
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.AttachmentValue)<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											} else if(field_<%=cid%>.getDataType() == com.bmc.arsys.api.Constants.AR_DATA_TYPE_CURRENCY) { // Currency
+												entry_<%=cid%>.put(field_<%=cid%>.getFieldID(), new com.bmc.arsys.api.Value((com.bmc.arsys.api.CurrencyValue)<%=connName%>.<%=label%>, com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType())));
+											}
+<%
 										} else {
-											errorMessage_<%=cid %> = errorMessage_<%=cid %> + "; " + "Could not set Remedy field " + field_<%=cid%>.getName() + ", Remedy datatype " + com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType()) + " with value " + <%=connName%>.<%=label%> + " JavaType <%=javaType%>";
-										}
-<%
-									}
 %>
+											hasError_<%=cid%> = true;
+											if (("").equals(errorMessage_<%=cid %>)){
+												errorMessage_<%=cid %> = "Could not set Remedy field " + field_<%=cid%>.getName() + ", Remedy datatype " + com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType()) + " with value " + <%=connName%>.<%=label%> + " JavaType <%=javaType%>";
+											} else {
+												errorMessage_<%=cid %> = errorMessage_<%=cid %> + "; " + "Could not set Remedy field " + field_<%=cid%>.getName() + ", Remedy datatype " + com.bmc.arsys.api.DataType.toDataType(field_<%=cid%>.getDataType()) + " with value " + <%=connName%>.<%=label%> + " JavaType <%=javaType%>";
+											}
+<%
+										}
+%>
+									}
 								} // If EntryID
 							} // if fieldname
 						} //if not fieldid 15
@@ -281,11 +292,14 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 				<%=rejectName %>.ETL_IMPORT_ERR = "Line: " + (tos_count_<%=node.getUniqueName() %>+1) + "|" + errorMessage_<%=cid %>;
 <%
 			}
-%>
-<%
 			if (filterName != null) {
 %>
 				<%=filterName %> = null;
+<%
+			}
+			if(isLog4jEnabled){
+%>
+				log.error("<%=cid%> - Line: " + (tos_count_<%=node.getUniqueName() %>+1) + " | " + errorMessage_<%=cid %>);
 <%
 			}
 %>

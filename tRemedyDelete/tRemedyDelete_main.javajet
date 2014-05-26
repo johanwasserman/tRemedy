@@ -1,0 +1,135 @@
+<%@ jet 
+imports="
+  org.talend.core.model.process.ElementParameterParser
+  org.talend.core.model.metadata.IMetadataTable
+  org.talend.core.model.metadata.IMetadataColumn
+  org.talend.core.model.process.INode  
+  org.talend.designer.codegen.config.CodeGeneratorArgument
+  org.talend.core.model.process.IConnectionCategory
+  org.talend.core.model.process.IConnection
+  java.util.List
+  java.util.Map
+  org.talend.core.model.metadata.types.JavaTypesManager
+  org.talend.core.model.metadata.types.JavaType
+"
+%>
+<%
+CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+INode node = (INode)codeGenArgument.getArgument();
+String cid = node.getUniqueName();
+
+String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
+String port = ElementParameterParser.getValue(node, "__PORT__");
+String username = ElementParameterParser.getValue(node, "__USERNAME__");
+String password = ElementParameterParser.getValue(node, "__PASSWORD__");
+String arform = ElementParameterParser.getValue(node, "__FORM__");
+
+String delete_uid = ElementParameterParser.getValue(node, "__DELETE_ID_FIELD__");
+
+boolean useExistingConnection = "true".equalsIgnoreCase(ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__"));
+
+String connName = null;
+String rejectName = null;
+
+if (node.getIncomingConnections().size() == 1) { //+1
+	IConnection conn = node.getIncomingConnections().get(0);
+	connName = conn.getName();
+}//-1
+List<IMetadataTable> metadatas = node.getMetadataList();
+
+boolean isLog4jEnabled = false;
+if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
+	IMetadataTable metadata = metadatas.get(0);
+
+	if (metadata!=null && connName != null) {//if connName
+		List<? extends IConnection> conns = node.getOutgoingSortedConnections();
+		List<? extends IConnection> connsReject = node.getOutgoingConnections("REJECT");
+		
+		isLog4jEnabled = ("true").equals(ElementParameterParser.getValue(node.getProcess(), "__LOG4J_ACTIVATE__"));
+
+		//if outgoing connections exists, kill them (a little overkil but safe)
+		if (conns != null && conns.size() > 0) {//if conns
+			for (IConnection conn : conns) {//for conns
+				if (conn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {//if linestyle
+        %>
+					<%=conn.getName()%> = null;
+        <%
+				}//if linestyle
+      		}//for conns
+    	}//if conns
+    	
+		if (connsReject != null && connsReject.size() > 0) {//Failed
+			for (IConnection conn : connsReject) {//for connsReject
+				if (conn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {//if linestyle
+					rejectName = conn.getName();
+%>
+					if (<%=rejectName%> == null) {
+						<%=rejectName%> = new <%=rejectName%>Struct();
+					}
+<%
+					
+				}
+			}
+		}
+%>
+		boolean hasError_<%=cid%> = false;
+		String errorMessage_<%=cid%> = "";
+
+		try {
+
+			String entryId_<%=cid%> = "";
+
+			nb_line_<%=cid%> ++;
+<%
+			for (IMetadataColumn column: metadata.getListColumns()) {//for columns
+				String label = column.getLabel();
+				String javaType = JavaTypesManager.getTypeToGenerate(column.getTalendType(), column.isNullable());
+				String patternValue = column.getPattern() == null || column.getPattern().trim().length() == 0 ? null : column.getPattern();
+				if (label.equals(delete_uid)) {
+%>
+					entryId_<%=cid%> = <%=connName%>.<%=label%>;
+<%
+				}
+			}//for columns
+%>
+			if (entryId_<%=cid%> != null && !"".equals(entryId_<%=cid%>)) {
+				aruser_<%=cid%>.deleteEntry(<%=arform%>, entryId_<%=cid%>, 0);
+				nb_line_ok_<%=cid%> ++;
+			}
+		} catch (Exception e) {
+			hasError_<%=cid%> = true;
+			if (("").equals(errorMessage_<%=cid %>)){
+				errorMessage_<%=cid %> = "[Entry Deletion Failed] " + e.getMessage();
+			} else {
+				errorMessage_<%=cid %> = errorMessage_<%=cid %> + ";" + "SEVERE - [Entry Deletion Failed] " + e.getMessage();
+			}
+		}
+		if (hasError_<%=cid%>) {
+			nb_line_reject_<%=cid%> ++;
+<%
+			if (rejectName != null) {
+%>
+				<%=rejectName %>.ETL_DELETE_ERR = "Line: " + (tos_count_<%=node.getUniqueName() %>+1) + "|" + errorMessage_<%=cid %>;
+<%
+			}
+			if(isLog4jEnabled){
+%>
+				log.error("<%=cid%> - Line: " + (tos_count_<%=node.getUniqueName() %>+1) + " | " + errorMessage_<%=cid %>);
+<%
+			}
+%>
+		} else{
+<%
+			if (rejectName != null) {
+%>
+				<%=rejectName %> = null;
+<%
+			}
+%>				
+		}
+		errorMessage_<%=cid %> = "";
+		hasError_<%=cid%> = false;
+<%
+	}//if connName
+}//if metadatas
+%>
