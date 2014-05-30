@@ -39,6 +39,7 @@
 			com.bmc.arsys.api.Entry record_<%=cid%> = aruser_<%=cid%>.getEntry(<%=arform%>, entry_<%=cid%>.getEntryId(), ids_<%=cid%>);
 			java.util.Iterator<java.util.Map.Entry<java.lang.Integer, com.bmc.arsys.api.Value>> data_<%=cid%> = record_<%=cid%>.entrySet().iterator();
 			while (data_<%=cid%>.hasNext()) { // while
+			
 				java.util.Map.Entry<java.lang.Integer, com.bmc.arsys.api.Value> col_<%=cid%> = data_<%=cid%>.next();
 				int type_<%=cid%> = col_<%=cid%>.getValue().getDataType().toInt(); // Field Type
 				int key_<%=cid%> = java.lang.Integer.valueOf(col_<%=cid%>.getKey().toString()); // Field ID

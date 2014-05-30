@@ -56,7 +56,10 @@
 			}
 %>
 				
-//	com.bmc.arsys.api.ARServerUser aruser_<%=cid%> = new com.bmc.arsys.api.ARServerUser(<%=username%>, <%=password%>, "", <%=arserver%>, port_<%=cid%>);
+	int nb_line_<%=cid%> = 0;
+	int nb_line_ok_<%=cid%> = 0;
+	int nb_line_reject_<%=cid%> = 0;
+
 	java.util.Map<Integer, String> fieldlist_<%=cid%> = new java.util.HashMap<Integer, String>();
 	java.util.List<com.bmc.arsys.api.Entry> entries_<%=cid%> = null;
 	java.util.List<com.bmc.arsys.api.Field> fields_<%=cid%> = null;
@@ -99,9 +102,13 @@
 		do {
 
 			entries_<%=cid%> = aruser_<%=cid%>.getListEntryObjects(<%=arform%>, qual_<%=cid%>, count_<%=cid%>, maxGetList_<%=cid%>, null, ids_<%=cid%>, false, nMatches_<%=cid%>);
+
+			nb_line_<%=cid%> = nMatches_<%=cid%>;
+
 			count_<%=cid%> += maxGetList_<%=cid%>;
 			
 			java.util.Iterator<com.bmc.arsys.api.Entry> it_<%=cid%> = entries_<%=cid%>.iterator();
 			while(it_<%=cid%>.hasNext()) {
-				com.bmc.arsys.api.Entry entry_<%=cid%> = (com.bmc.arsys.api.Entry)it_<%=cid%>.next();
+				try {
+					com.bmc.arsys.api.Entry entry_<%=cid%> = (com.bmc.arsys.api.Entry)it_<%=cid%>.next();
 		

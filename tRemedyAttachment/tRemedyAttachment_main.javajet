@@ -116,16 +116,22 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 								if ("Object".equals(javaType)) {
 %>
 									if (file_<%=cid %>!=null && !"".equals(file_<%=cid %>)) {
-										<%=outConnName %>.<%=label%> = new com.bmc.arsys.api.AttachmentValue(file_<%=cid %>, <%=directory%>+stub_<%=cid %>+"/"+file_<%=cid %>);
+<%
+										if (outConnName != null) {
+%>
+											<%=outConnName %>.<%=label%> = new com.bmc.arsys.api.AttachmentValue(file_<%=cid %>, <%=directory%>+stub_<%=cid %>+"/"+file_<%=cid %>);
+<%
+										}
+%>
 									}
 <%
 								} else {
 %>
 									hasError_<%=cid%> = true;
 									if (("").equals(errorMessage_<%=cid %>)){
-										errorMessage_<%=cid %> = "[<%=outConnName %>.<%=label%>] field JavaType is <%=javaType%> : Cannot save Object";
+										errorMessage_<%=cid %> = "[<%=label%>] field JavaType is <%=javaType%> : Cannot save Object";
 									} else {
-										errorMessage_<%=cid %> = errorMessage_<%=cid %> + "; " + "[<%=outConnName %>.<%=label%>] field JavaType is <%=javaType%> : Cannot save Object";
+										errorMessage_<%=cid %> = errorMessage_<%=cid %> + "; " + "[<%=label%>] field JavaType is <%=javaType%> : Cannot save Object";
 									}
 <%
 								}
@@ -156,9 +162,11 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 									<%=rejectName%>.<%=label%> = <%=connName%>.<%=label%>;
 <%
 								}
+								if (outConnName != null) {
 %>
-								<%=outConnName %>.<%=label%> = <%=connName%>.<%=label%>;
+									<%=outConnName %>.<%=label%> = <%=connName%>.<%=label%>;
 <%
+								}
 							} // if outLabel
 						} // for uploadtable
 					} else	if (process.equals("ATT_DOWNLOAD")) { //if dowload
@@ -186,12 +194,18 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 								attach_<%=cid%> = null;
 								
 								<%=connName%>.<%=down.getLabel()%> = null;
-								<%=outConnName %>.<%=up.getLabel()%> = attachment_<%=cid%>;
 <%
-							} else if (!label.equals(up.getLabel())) {
+								if (outConnName != null) {
 %>
-								<%=outConnName %>.<%=label%> = <%=connName%>.<%=label%>;
+									<%=outConnName %>.<%=up.getLabel()%> = attachment_<%=cid%>;
 <%
+								}
+							} else if (!label.equals(up.getLabel())) {
+								if (outConnName != null) {
+%>
+									<%=outConnName %>.<%=label%> = <%=connName%>.<%=label%>;
+<%
+								}
 								if (rejectName != null) {
 %>
 									<%=rejectName%>.<%=label%> = <%=connName%>.<%=label%>;
@@ -228,8 +242,12 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 				<%=rejectName %>.ETL_ATTACH_ERR = "Line: " + (tos_count_<%=node.getUniqueName() %>+1) + "|" + errorMessage_<%=cid %>;
 <%
 			}
+			if (outConnName != null) {
 %>
-			<%=outConnName %> = null;
+				<%=outConnName %> = null;
+<%
+			}
+%>
 		} else{
 <%
 			if (rejectName != null) {
@@ -242,6 +260,10 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 		}
 		errorMessage_<%=cid %> = "";
 		hasError_<%=cid%> = false;
+
+		globalMap.put("<%=cid %>_NB_LINE", nb_line_<%=cid%>);
+		globalMap.put("<%=cid %>_NB_LINE_OK", nb_line_ok_<%=cid%>);
+		globalMap.put("<%=cid %>_NB_LINE_REJECT", nb_line_reject_<%=cid%>);
 <%
 	} //if connName
 } //if metadatas

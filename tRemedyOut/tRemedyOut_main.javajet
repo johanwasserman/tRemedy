@@ -265,14 +265,22 @@ if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
 			if (!hasError_<%=cid%>) {
 				if (<%=usemerge%>) {
 					String returnId_<%=cid%> = aruser_<%=cid%>.mergeEntry(<%=arform%>, entry_<%=cid%>, mergeType_<%=cid%>);
-					if (<%=filterName%> != null) {
+<%
+					if (filterName != null) {
+%>
 						<%=filterName %>.ETL_IMPORT_REF = returnId_<%=cid%>;
+<%
 					}
+%>
 				} else {
 					String returnId_<%=cid%> = aruser_<%=cid%>.createEntry(<%=arform%>, entry_<%=cid%>);
-					if (<%=filterName%> != null) {
+<%
+					if (filterName != null) {
+%>
 						<%=filterName %>.ETL_IMPORT_REF = returnId_<%=cid%>;
+<%
 					}
+%>
 				}
 				nb_line_ok_<%=cid%> ++;
 			}
