@@ -21,11 +21,11 @@
 	String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
     boolean useExistingConnection = "true".equalsIgnoreCase(ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__"));
 %>
+					nb_line_ok_<%=cid%> ++;
+				} catch (Exception e) {
+					nb_line_reject_<%=cid%> ++;
+					throw e;
 				}
-				nb_line_ok_<%=cid%> ++;
-			} catch (Exception e) {
-				nb_line_reject_<%=cid%> ++;
-				throw e;
 			}
 		} while (maxGetList_<%=cid%> > 0 && count_<%=cid%> < nMatches_<%=cid%>.intValue());
 	} catch (com.bmc.arsys.api.ARException e) {
@@ -39,6 +39,6 @@
 <%
 	}
 %>
-	globalMap.put("<%=cid %>_NB_LINE", nb_line_<%=cid%>);
-	globalMap.put("<%=cid %>_NB_LINE_OK", nb_line_ok_<%=cid%>);
-	globalMap.put("<%=cid %>_NB_LINE_REJECT", nb_line_reject_<%=cid%>);
+//	globalMap.put("<%=cid %>_NB_LINE", nb_line_<%=cid%>);
+//	globalMap.put("<%=cid %>_NB_LINE_OK", nb_line_ok_<%=cid%>);
+//	globalMap.put("<%=cid %>_NB_LINE_REJECT", nb_line_reject_<%=cid%>);

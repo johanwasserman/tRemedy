@@ -103,7 +103,7 @@
 
 			entries_<%=cid%> = aruser_<%=cid%>.getListEntryObjects(<%=arform%>, qual_<%=cid%>, count_<%=cid%>, maxGetList_<%=cid%>, null, ids_<%=cid%>, false, nMatches_<%=cid%>);
 
-			nb_line_<%=cid%> = nMatches_<%=cid%>;
+			nb_line_<%=cid%> = nMatches_<%=cid%>.intValue();
 
 			count_<%=cid%> += maxGetList_<%=cid%>;
 			
