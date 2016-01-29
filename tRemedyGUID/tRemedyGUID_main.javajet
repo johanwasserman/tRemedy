@@ -1,0 +1,146 @@
+<%@ jet 
+imports="
+  org.talend.core.model.process.ElementParameterParser
+  org.talend.core.model.metadata.IMetadataTable
+  org.talend.core.model.metadata.IMetadataColumn
+  org.talend.core.model.process.INode  
+  org.talend.designer.codegen.config.CodeGeneratorArgument
+org.talend.core.model.process.EConnectionType 
+  org.talend.core.model.process.IConnectionCategory
+  org.talend.core.model.process.IConnection
+  java.util.List
+  java.util.Map
+  org.talend.core.model.metadata.types.JavaTypesManager
+  org.talend.core.model.metadata.types.JavaType
+"
+%>
+<%
+CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+INode node = (INode)codeGenArgument.getArgument();
+String cid = node.getUniqueName();
+
+String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
+String port = ElementParameterParser.getValue(node, "__PORT__");
+String username = ElementParameterParser.getValue(node, "__USERNAME__");
+String password = ElementParameterParser.getValue(node, "__PASSWORD__");
+
+String prefix = ElementParameterParser.getValue(node, "__PREFIX__");
+String maptofield = ElementParameterParser.getValue(node, "__MAP_TO_FIELD__");
+
+boolean useExistingConnection = "true".equalsIgnoreCase(ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__"));
+
+String connName = null;
+String outConnName = null;
+String rejectName = null;
+
+if (node.getIncomingConnections().size() == 1) { //+1
+	IConnection conn = node.getIncomingConnections().get(0);
+	connName = conn.getName();
+}//-1
+List<IMetadataTable> metadatas = node.getMetadataList();
+
+boolean isLog4jEnabled = false;
+if ((metadatas != null) && (metadatas.size() > 0)) {//if metadatas
+	IMetadataTable metadata = metadatas.get(0);
+
+	if (metadata!=null && connName != null) {//if connName
+		List<? extends IConnection> outConns = node.getOutgoingSortedConnections();
+		List<? extends IConnection> connsReject = node.getOutgoingConnections("REJECT");
+		
+		isLog4jEnabled = ("true").equals(ElementParameterParser.getValue(node.getProcess(), "__LOG4J_ACTIVATE__"));
+
+		for (IConnection conn : outConns) { // for 0
+			outConnName = conn.getName();					
+%>
+			if (<%=outConnName%> == null) {
+				<%=outConnName%> = new <%=outConnName%>Struct();
+			}
+<%
+		}
+ 		if (connsReject != null && connsReject.size() > 0) {//Failed
+			for (IConnection conn : connsReject) {//for connsReject
+				if (conn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {//if linestyle
+					rejectName = conn.getName();
+%>
+					if (<%=rejectName%> == null) {
+						<%=rejectName%> = new <%=rejectName%>Struct();
+					}
+<%	
+				}
+			}
+		}
+%>
+		boolean hasError_<%=cid%> = false;
+		String errorMessage_<%=cid%> = "";
+
+		try {
+
+			nb_line_<%=cid%> ++;
+			String cmd_<%=cid%> = "Application-Generate-GUID";
+			if (<%=prefix%> != null && !"".equals(<%=prefix%>)) {
+				 cmd_<%=cid%> =  cmd_<%=cid%> + " " + <%=prefix%>;
+			}
+//-----------------------------------------------------------------------------------------------
+<%
+			for (IMetadataColumn column: metadata.getListColumns()) {//for columns
+				String label = column.getLabel();
+				String javaType = JavaTypesManager.getTypeToGenerate(column.getTalendType(), column.isNullable());
+				String patternValue = column.getPattern() == null || column.getPattern().trim().length() == 0 ? null : column.getPattern();
+				if (label.equals(maptofield)) {
+%>
+					com.bmc.arsys.api.ProcessResult pResults<%=cid%> = aruser_<%=cid%>.executeProcess(cmd_<%=cid%>);
+					<%=outConnName %>.<%=label%> = pResults<%=cid%>.getOutput();
+<%
+				} else {
+					if (rejectName != null) {
+%>
+						<%=rejectName%>.<%=label%> = <%=connName%>.<%=label%>;
+<%
+					}
+					if (outConnName != null) {
+%>
+						<%=outConnName %>.<%=label%> = <%=connName%>.<%=label%>;
+<%
+					}
+				}
+			}//for columns
+%>
+			nb_line_ok_<%=cid%> ++;
+//-----------------------------------------------------------------------------------------------
+		} catch (Exception e) {
+			hasError_<%=cid%> = true;
+			if (("").equals(errorMessage_<%=cid %>)){
+				errorMessage_<%=cid %> = "[GUID Generation Failed] " + e.getMessage();
+			} else {
+				errorMessage_<%=cid %> = errorMessage_<%=cid %> + ";" + "SEVERE - [GUID Generation Failed] " + e.getMessage();
+			}
+		}
+		if (hasError_<%=cid%>) {
+			nb_line_reject_<%=cid%> ++;
+<%
+			if (rejectName != null) {
+%>
+				<%=rejectName %>.ETL_GENGUID_ERR = "Line: " + (tos_count_<%=node.getUniqueName() %>+1) + "|" + errorMessage_<%=cid %>;
+<%
+			}
+			if(isLog4jEnabled){
+%>
+				log.error("<%=cid%> - Line: " + (tos_count_<%=node.getUniqueName() %>+1) + " | " + errorMessage_<%=cid %>);
+<%
+			}
+%>
+		} else{
+<%
+			if (rejectName != null) {
+%>
+				<%=rejectName %> = null;
+<%
+			}
+%>				
+		}
+		errorMessage_<%=cid %> = "";
+		hasError_<%=cid%> = false;
+<%
+	}//if connName
+}//if metadatas
+%>

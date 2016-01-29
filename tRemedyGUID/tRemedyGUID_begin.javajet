@@ -17,29 +17,25 @@ String arserver = ElementParameterParser.getValue(node, "__ARSERVER__");
 String port = ElementParameterParser.getValue(node, "__PORT__");
 String username = ElementParameterParser.getValue(node, "__USERNAME__");
 String password = ElementParameterParser.getValue(node, "__PASSWORD__");
-String arform = ElementParameterParser.getValue(node, "__FORM__");
-String mergeType = ElementParameterParser.getValue(node, "__HANDLEID__");
-Boolean usemerge = ("true").equals(ElementParameterParser.getValue(node, "__USEMERGE__"));
-Boolean nullok = ("true").equals(ElementParameterParser.getValue(node, "__NULLOK__"));
-Boolean pattern = ("true").equals(ElementParameterParser.getValue(node, "__PATTERN__"));
-Boolean workflow = ("true").equals(ElementParameterParser.getValue(node, "__WORKFLOW__"));
 boolean useExistingConnection = "true".equalsIgnoreCase(ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__"));
 
 List<IMetadataTable> metadatas = node.getMetadataList();
 List<IMetadataColumn> columns = null;
 
-boolean isLog4jEnabled = ("true").equals(ElementParameterParser.getValue(node.getProcess(), "__LOG4J_ACTIVATE__"));
+boolean isLog4jEnabled = false;
 
 if (metadatas != null && metadatas.size() > 0) {
 	IMetadataTable metadata = metadatas.get(0);
 	
+	isLog4jEnabled = ("true").equals(ElementParameterParser.getValue(node.getProcess(), "__LOG4J_ACTIVATE__"));
+
 	if (metadata != null) {
 		columns = metadata.getListColumns();
 %>
 <%
 		if(isLog4jEnabled){
 %>
-			log.info("<%=cid%> - Start to work.");
+			log.info("<%=cid%> - Start.");
 			StringBuffer log4jSb_<%=cid%> = new StringBuffer();
 <%
 		}
@@ -72,9 +68,7 @@ try {
 	}
 	if(isLog4jEnabled){
 %>
-		log.info("Outgoing connection: Logged on to "+<%=arserver%>+" server version: " + aruser_<%=cid%>.getServerVersion());
+		log.info("<%=cid%> - Outgoing connection: Logged on to "+<%=arserver%>+" server version: " + aruser_<%=cid%>.getServerVersion());
 <%
 	}
 %>
-	java.util.List<com.bmc.arsys.api.Field> fields_<%=cid%> = null;
-	fields_<%=cid%> = aruser_<%=cid%>.getListFieldObjects(<%=arform%>);

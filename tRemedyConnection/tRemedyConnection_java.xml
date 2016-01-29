@@ -1,14 +1,17 @@
 <COMPONENT>
 	<HEADER
-    	PLATEFORM="ALL"
-     	SERIAL=""
-      	VERSION="0.101"
-       	STATUS="ALPHA"
-         
-		COMPATIBILITY="ALL"
-    	AUTHOR="Talend"
- 		RELEASE_DATE="20070210A"
-    	STARTABLE="true"
+		PLATEFORM="ALL" 
+		SERIAL="" 
+		VERSION="0.397" 
+		STATUS="ALPHA"
+		COMPATIBILITY="ALL" 
+		AUTHOR="johan.wasserman@gmail.com" 
+		RELEASE_DATE="20110229A"
+		STARTABLE="false" 
+		HAS_CONDITIONAL_OUTPUTS="true"
+		DATA_AUTO_PROPAGATE="false"
+		SCHEMA_AUTO_PROPAGATE ="true"
+		PARTITIONING="AUTO"
   		>
     	<SIGNATURE></SIGNATURE>
   	</HEADER>
@@ -45,7 +48,8 @@
 	</ADVANCED_PARAMETERS>
 	<CODEGENERATION>
 		<IMPORTS>
-    	  <IMPORT MODULE="arapi81_build001.jar" NAME="arapi81_build001" REQUIRED="true"/>
+    	  <!-- IMPORT MODULE="arapi81_build001.jar" NAME="ARAPI" REQUIRED="true"/-->
+    	  <IMPORT MODULE="arapi90_build001.jar" NAME="ARAPI" REQUIRED="true"/>
     	  <IMPORT MODULE="log4j-1.2.14.jar" NAME="log4j" REQUIRED="true"/>
 		</IMPORTS>
 	</CODEGENERATION>
