@@ -27,7 +27,7 @@ You can use a single connection to execute all your Remedy transactions in.  Jus
 
 Note that we are mapping the Task ID as the "file store".  This will be explained further in the tRemedyAttachment connector below.
 
-![alt tag](https://github.com/johanwasserman/images/blob/master/tMapSave.png)
+![alt tag](https://github.com/johanwasserman/images/blob/master/saveMap.png)
 
 
 ###### tRemedyIn
