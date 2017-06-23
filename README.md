@@ -13,7 +13,7 @@ First define your context parameters to include the Remedy host, port, username 
 #### Find a record and download an attachment
 
 
-The job establishes a Remedy connection find a record in the TMS:Task form and downloads the first attachment to disk.
+The job establishes a Remedy connection, finds a record in the TMS:Task form and download the first attachment to disk.
 We are using Task as an example, any form that contains attachments can be used in the same way.
 ![alt tag](https://github.com/johanwasserman/images/blob/master/save.png)
 
