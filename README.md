@@ -35,7 +35,8 @@ Note that we are mapping the Task ID as the "file store".  This will be explaine
 
 
 ###### tRemedyIn
-Notice the use of "Use Existing Connection".  Alternatively you can specify connection parameters for individual tRemedy components.
+Notice the use of "Use Existing Connection".  Alternatively you can specify connection parameters for individual tRemedy connectors.
+
 The schema needs to be defined manually (for now) and you have to replace all special characters, including spaces, in the Remedy field names with underscore (\_) or Talend will not accept them.  The connectors are clever enough to translate the underscore back to the correct Remedy field name.  
 
 For this job, the Remedy schema was pretty much defined in the tMap above.
@@ -78,6 +79,8 @@ Note that in this case the data from MongoDB includes a file name string in the 
 ###### tRemedyAttachment (upload)
 Again we secify the attachment base directory, and this time we include the Task ID and file name from MongoDB to build a "File Name" parameter as a complete path to where the file is stored (on disk).  These two parameters forms the "subdirectory"/"filename" part to append t the base directory for a full path to the file.  This example also deletes the file on disk once it's uploaded to the atatchment field.
 
+**Note:** Apologies, the "File Name" parameter below will not work becasue I did not include a "/" between the Task ID and filename variables.  It should be `((String)globalMap.get("WorkInfo.TaskOrTaskGroupID")) + "/" + ((String)globalMap.get("WorkInfo.filename"))` 
+
 ![alt tag](https://github.com/johanwasserman/images/blob/master/tRemedyAttachUp.png)
 
 ###### tRemedyOut
@@ -95,6 +98,6 @@ This connector will permanently delete a Remedy record based on the identifier y
 
 ###### tRemedyGUID
 
-This connector will put a Remedy generated GUID in the field you specify.  It works exactly tghe same as Remedy's runprocess "Application-Generate-GUID".  You can even specify a prefix if you want.
+This connector will put a Remedy generated GUID in the field you specify.  It works exactly the same as Remedy's runprocess "Application-Generate-GUID".  You can even specify a prefix if you want.
 
 See the [BMC doumnets](https://docs.bmc.com/docs/display/public/ars9000/Process+commands) for more info.
