@@ -1,7 +1,9 @@
 tRemedy
 =======
 
-Remedy connectors for Talend
+Remedy connectors for Talend.
+
+Although the two examples below are focused mainly on attachments, they are just to give the reader a general understanding of how to use the connectors individualy without having to include too many examples.
 
 #### Context parameters
 
@@ -32,8 +34,10 @@ Note that we are mapping the Task ID as the "file store".  This will be explaine
 
 ###### tRemedyIn
 Notice the use of "Use Existing Connection".  Alternatively you can specify connection parameters for individual tRemedy components.
-The schema needs to be defiined manually (for now) and you have to replace all special characters in the Remedy field names with underscore (\_) or Talend will not accept them.  For this job, the Remedy schema was pretty much defined in the tMap above.
-The query parameter uses the standard Remedy format, as if you would use the Advanced Search bar.  The only difference is that you would need to use escape "\" (see example below).
+The schema needs to be defined manually (for now) and you have to replace all special characters, including spaces, in the Remedy field names with underscore (\_) or Talend will not accept them.  The connectors are clever enough to translate the underscore back to the correct Remedy field name.  
+
+For this job, the Remedy schema was pretty much defined in the tMap above.
+The query parameter use the standard Remedy query format, as if you would use the Advanced Search bar.  The only difference is that you would need to use escape (\\") for double quotes (") as in the example below.
 
 ![alt tag](https://github.com/johanwasserman/images/blob/master/tRemedyIn.png)
 
@@ -58,11 +62,11 @@ A tRemedyClose only need to be used where there is a tRemedyConnection.  This co
 
 #### Create a record with an attachment
 
-This example connnects to MongoDB (our staging data store), and for each matching record it will update an existing Task's Work Info by uploading an attachment from a directory and in this case, create a new "TMS:WorkInfo" record.
+This example connects to MongoDB (our staging data store), and for each matching record it will update an existing Task's Work Info by uploading an attachment from a directory and in this case, create a new "TMS:WorkInfo" record.
 
 ![alt tag](https://github.com/johanwasserman/images/blob/master/load.png)
 
-I am excluding descriptions for the tRemedyConnection and tRemedyClose connectors, see above for details.
+I am excluding descriptions for the tRemedyConnection and tRemedyClose connectors, see [above](https://github.com/johanwasserman/tRemedy#find-a-record-and-download-an-attachment) for details.
 
 Note that in this case the data from MongoDB includes a file name string in the attachment1 field, as well as the Task ID for which a Work Info record will be created.
 
