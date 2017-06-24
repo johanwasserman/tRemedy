@@ -100,4 +100,4 @@ This connector will permanently delete a Remedy record based on the identifier y
 
 This connector will put a Remedy generated GUID in the field you specify.  It works exactly the same as Remedy's runprocess "Application-Generate-GUID".  You can even specify a prefix if you want.
 
-See the [BMC doumnets](https://docs.bmc.com/docs/display/public/ars9000/Process+commands) for more info.
+See the [BMC douments](https://docs.bmc.com/docs/display/public/ars9000/Process+commands) for more info.
