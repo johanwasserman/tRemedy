@@ -5,7 +5,7 @@ Remedy connectors for Talend.
 
 Although the two examples below are focused mainly on attachments, they are aimed to give the reader a general understanding of how to use the connectors individualy without having to include too many examples.
 
-**_Invitation to contribute_**  If you have experience in developing connectors for Talend, I need some assistance, especially to connect to Remedy and extract schemas;  Feel free to contribute.
+**_Invitation to contribute:_**  If you have experience in developing connectors for Talend, I need some assistance, especially to connect to Remedy and extract schemas;  Feel free to contribute.
 
 #### Context parameters
 
