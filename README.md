@@ -79,7 +79,7 @@ Note that in this case the data from MongoDB includes a file name string in the 
 ###### tRemedyAttachment (upload)
 Again we secify the attachment base directory, and this time we include the Task ID and file name from MongoDB to build a "File Name" parameter as a complete path to where the file is stored (on disk).  These two parameters forms the "subdirectory"/"filename" part to append t the base directory for a full path to the file.  This example also deletes the file on disk once it's uploaded to the atatchment field.
 
-**Note:** Apologies, the "File Name" parameter below will not work becasue I did not include a "/" between the Task ID and filename variables.  It should be `((String)globalMap.get("WorkInfo.TaskOrTaskGroupID")) + "/" + ((String)globalMap.get("WorkInfo.filename"))` 
+**_Update:_** Apologies, the "File Name" parameter below will not work becasue I did not include a "/" between the Task ID and filename variables.  It should be `((String)globalMap.get("WorkInfo.TaskOrTaskGroupID")) + "/" + ((String)globalMap.get("WorkInfo.filename"))` 
 
 ![alt tag](https://github.com/johanwasserman/images/blob/master/tRemedyAttachUp.png)
 
